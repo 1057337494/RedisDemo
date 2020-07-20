@@ -12,11 +12,15 @@ namespace RedisDemon
     {
         static void Main(string[] args)
         {
-            //Penetration();
+            new CachePenetrationBLL().TestPenetration();
 
-            //new RedisTypeBLL().ShowType();
+            // new RedisTypeBLL().ShowType();
 
-            // new DoubleBuffBLL().TestDoubleBuff();
+
+            //new CachePreheatBLL().GetPreheatCache();
+
+            Console.WriteLine("Hello World!");
+        }
 
             new CachePenetrationBLL().Penetration();
 

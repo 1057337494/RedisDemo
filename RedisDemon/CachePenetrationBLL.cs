@@ -1,105 +1,103 @@
 ﻿using RedisBase;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using static RedisBase.Register;
-
 namespace RedisDemon
 {
     /// <summary>
-    /// 缓存雪崩
+    /// 缓存穿透
     /// </summary>
     public class CachePenetrationBLL
     {
-        public CachePenetrationBLL()
+        public class Person
         {
-            new Task(async () =>
+            public Person()
             {
-                for (int i = 0; i < 10; i++)
-                {
-                    await SetCache(i);
-                }
-            });
-        }
-
-        private string GetDbData(int i)
-        {
-            var data = $"数据[{i}]";
-            WriteColorLine($"数据库查询数据[{i}]", ConsoleColor.Green);
-            return data;
-        }
-
-        private async Task SetCache(int i)
-        {
-            Thread.Sleep(1 * 1000);
-            await Register.RedisDb.SetAsync($"Cache{i}", GetDbData(i), 2);
-        }
-
-        private async Task SetCacheWithRadom()
-        {
-            await RedisDb.SetAsync("Cache1", "缓存数据", 1 + new Random().Next());
-
-
-        }
-
-        private async Task<string> GetCache(int i)
-        {
-            var val = await Register.RedisDb.GetAsync($"Cache{i}");
-            if (val == null)
-            {
-               
-                
-
-                await SetCache(i);
-                return GetDbData(i);
-            }
-            return val;
-
-        }
-
-        public void Penetration()
-        {
-            //1.同一时间大量缓存失效
-            for (int i = 0; i < 10; i++)
-            {
-               
-                WriteColorLine(GetCache(i), ConsoleColor.Red);
-
             }
 
+            public Person(int id, string name, int age)
+            {
+                Id = id;
+                Name = name;
+                Age = age;
+            }
+
+            public int Id { get; set; }
+            public string Name { get; set; }
+            public int Age { get; set; }
+        }
+
+        private List<Person> _dbData = new List<Person> { 
+        new Person(1,"测试001",18),
+        new Person(2,"测试002",18),
+        new Person(3,"测试003",18),
+        new Person(4,"测试004",18),
+        new Person(5,"测试005",18),
+        new Person(6,"测试006",18),  
+        };
 
 
-            //2.热点数据失效
+        private Person GetDbData(int id)
+        {
+            WriteColorLine ("数据库查询",ConsoleColor.Gray);
+            return _dbData.Where(s => s.Id == id).FirstOrDefault();
+        }
 
-            //void Show()
-            //{
-            //    for (int i = 0; i < 1000; i++)
-            //    {
-            //        var str = bll.GetCache().Result;
-            //        if (str.Contains("数据库"))
-            //        {
-            //            WriteColorLine(str + $"[{DateTime.Now}]", ConsoleColor.Red);
-            //        }
-            //        else
-            //        {
-            //            //WriteColorLine(str, ConsoleColor.White);
-            //        }
-            //    }
-            //}
+        //public void SetCache(string value)
+        //{
+        //    Register.RedisDb.Set("Cache1", value, 1);
 
-            //var taskArr = new Task[100];
-            //for (int i = 0; i < 100; i++)
-            //{
-            //    taskArr[i] = (new Task(Show));
-            //    taskArr[i].Start();
-            //}
+        //}
 
-            //Task.WaitAll(taskArr);
+
+
+        private Person GetCache(int id)
+        {
+            var cacheKey = "PenetrationCache1";
+
+            var getCache = RedisDb.HGet(cacheKey, id.ToString());
+            if (getCache == null)
+            {
+                var dt = GetDbData(id);
+                Register.RedisDb.HSet(cacheKey, id.ToString(), dt);
+                return dt;
+            }
+            return Newtonsoft.Json.JsonConvert.DeserializeAnonymousType(getCache,new Person());
         }
 
 
+        public void TestPenetration()
+        {
+            for (int i = 0; i < 100; i++)
+            {
+                Thread.Sleep(1);
+                GetCache(new Random().Next(1, 15));
+            }
+
+
+
+        }
+
+
+        //public string GetCache2()
+        //{
+        //    var val = Register.RedisDb.Get("Cache1");
+        //    if (val == null)
+        //    {
+        //        var dt = GetDbData();
+        //        if (dt == null)
+        //        {
+        //            dt = "防止击穿";
+        //        }
+        //        SetCache(dt);
+        //        return dt;
+        //    }
+        //    return val;
+        //}
 
 
     }

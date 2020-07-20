@@ -28,11 +28,15 @@ namespace RedisDemon
             RedisDb.LPush(cacheKey,"TT1","TT2","TT3");
             RedisDb.LPush(cacheKey,"BB1", "BB2", "BB3");
 
-            for (int i = 0; i < 5; i++)
-            {
-               WriteColorLine( RedisDb.LPop(cacheKey),ConsoleColor.Cyan);
-            }
+            RedisDb.RPush(cacheKey, "CC1", "CC2", "CC3");
 
+            //for (int i = 0; i < 5; i++)
+            //{
+            //   WriteColorLine( RedisDb.LPop(cacheKey),ConsoleColor.Cyan);
+            //}
+
+
+            RedisDb.Expire(cacheKey, 30);
             //WriteColorLine(RedisDb.HMGet("StrKey1",new[] { "aaa","bbb"})[0], ConsoleColor.Yellow);
 
         }

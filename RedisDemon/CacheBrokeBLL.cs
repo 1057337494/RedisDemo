@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace RedisDemon
 {
+    /// <summary>
+    /// 缓存穿透
+    /// </summary>
     public class CacheBrokeBLL
     {
         public string GetDbData()
@@ -14,32 +17,85 @@ namespace RedisDemon
             return null;
         }
 
-        public async Task SetCache()
+        public void SetCache(string value)
         {
-            await Register.RedisDb.SetAsync("Cache1", "缓存查询", 1);
+            Register.RedisDb.Set("Cache1", value, 1);
 
         }
 
-        public async Task SetCacheWithRadom()
-        {
-            await Register.RedisDb.SetAsync("Cache1", "缓存数据", 1+new Random().Next());
 
-        }
 
-        public async Task<string> GetCache()
+        public string GetCache()
         {
-            var val = await Register.RedisDb.GetAsync("Cache1");
+            var val =  Register.RedisDb.Get("Cache1");
             if (val == null)
             {
-                await SetCache();
-                return GetDbData();
+                var dt = GetDbData();
+                SetCache(dt);
+                return dt;
             }
             return val;
-
         }
 
 
-        
+        public string GetCache2()
+        {
+            var val = Register.RedisDb.Get("Cache1");
+            if (val == null)
+            {
+                var dt = GetDbData();
+                if (dt == null)
+                {
+                    dt = "防止击穿";
+                }
+                SetCache(dt);
+                return dt;
+            }
+            return val;
+        }
+
+
+        //static void Penetration()
+        //{
+        //    var bll = new CachePenetrationBLL();
+
+        //    void Show()
+        //    {
+        //        for (int i = 0; i < 1000; i++)
+        //        {
+        //            var str = bll.GetCache();
+        //            WriteColorLine(str + $"[{DateTime.Now}]", ConsoleColor.Red);
+        //        }
+
+        //    }
+
+        //    Show();
+        //}
+        //static void Penetration2()
+        //{
+        //    var bll = new CachePenetrationBLL();
+
+        //    void Show()
+        //    {
+        //        for (int i = 0; i < 1000; i++)
+        //        {
+        //            var str = bll.GetCache2();
+        //            if (str.Contains("数据库"))
+        //            {
+        //                WriteColorLine(str + $"[{DateTime.Now}]", ConsoleColor.Red);
+        //            }
+        //            else
+        //            {
+        //                WriteColorLine(str, ConsoleColor.White);
+        //            }
+        //        }
+        //    }
+
+        //    Show();
+        //}
+
+       
+
 
 
     }

@@ -13,60 +13,61 @@ namespace RedisDemon
     /// </summary>
     public class CachePenetrationBLL
     {
-        public class Person
+
+
+
+
+
+       
+
+        private Person GetCache2(int id)
         {
-            public Person()
+            var cacheKey = "PenetrationCache2";
+
+            var getCache = RedisDb.HGet(cacheKey, id.ToString());
+
+
+
+            if (getCache == null)
             {
+                //全表重建缓存
+                var pinple = RedisDb.StartPipe();
+                foreach (var item in GetDbAll())
+                {
+                    pinple.HSet(cacheKey, item.Id.ToString(), item);
+                }
+                pinple.EndPipe();
+
+
+                getCache = RedisDb.HGet(cacheKey, id.ToString());
             }
 
-            public Person(int id, string name, int age)
+            RedisDb.Expire(cacheKey, 10);
+
+
+            if (getCache == null)
             {
-                Id = id;
-                Name = name;
-                Age = age;
+                return GetDbData(id);
             }
 
-            public int Id { get; set; }
-            public string Name { get; set; }
-            public int Age { get; set; }
+            return Newtonsoft.Json.JsonConvert.DeserializeAnonymousType(getCache, new Person());
         }
-
-        private List<Person> _dbData = new List<Person> { 
-        new Person(1,"测试001",18),
-        new Person(2,"测试002",18),
-        new Person(3,"测试003",18),
-        new Person(4,"测试004",18),
-        new Person(5,"测试005",18),
-        new Person(6,"测试006",18),  
-        };
-
-
-        private Person GetDbData(int id)
-        {
-            WriteColorLine ("数据库查询",ConsoleColor.Gray);
-            return _dbData.Where(s => s.Id == id).FirstOrDefault();
-        }
-
-        //public void SetCache(string value)
-        //{
-        //    Register.RedisDb.Set("Cache1", value, 1);
-
-        //}
-
 
 
         private Person GetCache(int id)
         {
-            var cacheKey = "PenetrationCache1";
+            var cacheKey = "PenetrationCache2";
 
             var getCache = RedisDb.HGet(cacheKey, id.ToString());
             if (getCache == null)
             {
                 var dt = GetDbData(id);
-                Register.RedisDb.HSet(cacheKey, id.ToString(), dt);
+                RedisDb.HSet(cacheKey, id.ToString(), dt);
                 return dt;
             }
-            return Newtonsoft.Json.JsonConvert.DeserializeAnonymousType(getCache,new Person());
+
+            RedisDb.Expire(cacheKey, 10);
+            return Newtonsoft.Json.JsonConvert.DeserializeAnonymousType(getCache, new Person());
         }
 
 
@@ -75,7 +76,9 @@ namespace RedisDemon
             for (int i = 0; i < 100; i++)
             {
                 Thread.Sleep(1);
-                GetCache(new Random().Next(1, 15));
+                var id = new Random().Next(1, 15);
+                WriteColorLine($"查询ID:[{id}]", ConsoleColor.Gray);
+                GetCache2(id);
             }
 
 

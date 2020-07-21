@@ -12,7 +12,10 @@ namespace RedisDemon
     {
         static void Main(string[] args)
         {
-            new CachePenetrationBLL().TestPenetration();
+            //new CachePenetrationBLL().TestPenetration();
+            new CacheBrokeBLL().BrokeTest();
+            //new CacheBrokeBLL().BrokeTest2();
+            //new CacheBrokeBLL().BrokeTest3();
 
             // new RedisTypeBLL().ShowType();
 
@@ -21,21 +24,5 @@ namespace RedisDemon
 
             Console.WriteLine("Hello World!");
         }
-
-            new CachePenetrationBLL().Penetration();
-
-            Console.WriteLine("Hello World!");
-        }
-
- 
-
-
-       
-
-
-
-
-
-
     }
 }

@@ -61,7 +61,6 @@ namespace RedisDemon
                         SwapCache();
                         Task.Run(() =>
                         {
-                            
                             ReloadCache();
                         });
                     }
@@ -72,12 +71,52 @@ namespace RedisDemon
         }
 
 
+        private string ReadCacheByLock()
+        {
+            if (DateTime.Now > _nextReloadTime)
+            {
+                lock (this)
+                {
+                    if (DateTime.Now > _nextReloadTime)
+                    {
+                        ReloadCache();
+                    }
+                }
+            }
+            return RedisDb.Get(_cacheList[_usingCache]);
+        }
+
+        private bool _isLock = false;
+        private string ReadCacheByLockExpire()
+        {
+            if (DateTime.Now > _nextReloadTime&&!_isLock)
+            {
+                _isLock = true;
+                lock (this)
+                {
+
+                    if (DateTime.Now > _nextReloadTime)
+                    {
+                        ReloadCache();
+                    }
+                }
+                _isLock = false;
+            }
+            return RedisDb.Get(_cacheList[_usingCache]);
+        }
+
+
+
+
+
         public void TestDoubleBuff()
         {
             for (int i = 0; i < 100; i++)
             {
                 Thread.Sleep(100);
-                WriteColorLine($"[{DateTime.Now}]:::::::"+ReadCache(), ConsoleColor.Yellow);
+               // WriteColorLine($"[{DateTime.Now}]:::::::" + ReadCache(), ConsoleColor.Yellow);
+                WriteColorLine($"[{DateTime.Now}]:::::::" + ReadCacheByLock(), ConsoleColor.Yellow);
+                WriteColorLine($"[{DateTime.Now}]:::::::" + ReadCacheByLockExpire(), ConsoleColor.Yellow);
 
             }
         }

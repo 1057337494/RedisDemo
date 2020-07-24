@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using static RedisBase.Register;
 
 namespace RedisDemon
@@ -10,13 +11,15 @@ namespace RedisDemon
     {
         public void ShowType()
         {
-            ShowList();
+            //ShowList();
             //ShowStr();
 
             //ShowGeo();
             //ShowSet();
 
             //ShowHash();
+
+            ShowSortSet();
         }
 
         /// <summary>
@@ -24,20 +27,47 @@ namespace RedisDemon
         /// </summary>
         private void ShowList()
         {
+            //场景一：使用队列令牌进行熔断限流
             var cacheKey = "ListKey1";
-            RedisDb.LPush(cacheKey,"TT1","TT2","TT3");
-            RedisDb.LPush(cacheKey,"BB1", "BB2", "BB3");
+            void SendToken()
+            {
+                //每秒生成三个令牌 上限为10个令牌
+                while (true)
+                {
+                    Thread.Sleep(1 * 1000);
+                    var len = RedisDb.LLen(cacheKey);
 
-            RedisDb.RPush(cacheKey, "CC1", "CC2", "CC3");
+                    var insArr = new string[len + 3 > 10 ? 10 - len : 3];
+                    for (int i = 0; i < insArr.Length; i++)
+                    {
+                        insArr[i] = "1";
+                    }
 
-            //for (int i = 0; i < 5; i++)
-            //{
-            //   WriteColorLine( RedisDb.LPop(cacheKey),ConsoleColor.Cyan);
-            //}
+
+                    RedisDb.LPush(cacheKey, insArr);
+
+                }
+            }
+
+            Task.Run(() =>
+            {
+                SendToken();
+            });
+
+            for (int i = 0; i < 1000; i++)
+            {
+                Thread.Sleep(100);
+                if (RedisDb.LPop(cacheKey) == "1")
+                {
+                    WriteColorLine("成功获取令牌，正在执行业务", ConsoleColor.Red);
+                }
+                else
+                {
+                    WriteColorLine("获取令牌失败，访问超时", ConsoleColor.Green);
+                }
+            }
 
 
-            RedisDb.Expire(cacheKey, 30);
-            //WriteColorLine(RedisDb.HMGet("StrKey1",new[] { "aaa","bbb"})[0], ConsoleColor.Yellow);
 
         }
 
@@ -93,6 +123,48 @@ namespace RedisDemon
             }
 
         }
+
+        /// <summary>
+        /// 有序集合
+        /// </summary>
+        private void ShowSortSet()
+        {
+            var cacheKey = "SortZetExpireOrder";
+            void CreateOrder()
+            {
+                var orderId = Guid.NewGuid();
+                WriteColorLine($"创建订单ID:【{orderId}】", ConsoleColor.Yellow);
+                var orderExpireTimeSpan = DateTime.Now.AddSeconds(3).Ticks;
+                RedisDb.ZAdd(cacheKey, (orderExpireTimeSpan, orderId));
+            }
+
+
+            void ExpireOrder()
+            {
+                while (true)
+                {
+                    var getKey = RedisDb.ZRangeByScore(cacheKey, 0.ToString(), DateTime.Now.Ticks.ToString(), 1);
+                    RedisDb.ZRem(cacheKey, getKey);
+                    Thread.Sleep(100);
+                    if(getKey.Length>0)
+                    {
+                        WriteColorLine($"订单ID过期:【{getKey[0]}】", ConsoleColor.Blue);
+                    }
+                }
+            }
+
+            Task.Run(() => ExpireOrder());
+
+           
+            for (int i = 0; i < 100; i++)
+            {
+                Thread.Sleep(100);
+                CreateOrder();
+            }
+
+            Thread.Sleep(100 * 1000);
+        }
+
 
         /// <summary>
         /// 地图

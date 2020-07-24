@@ -13,7 +13,7 @@ namespace RedisBase
 
         static Register()
         {
-            RedisDb = new CSRedis.CSRedisClient("192.168.0.223:6379,defaultDatabase=09");
+            RedisDb = new CSRedis.CSRedisClient("localhost:8888,defaultDatabase=09");
         }
 
         public async static void WriteColorLine(string str, ConsoleColor color)

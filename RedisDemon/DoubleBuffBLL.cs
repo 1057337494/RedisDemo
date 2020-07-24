@@ -83,18 +83,17 @@ namespace RedisDemon
                     }
                 }
             }
-            return RedisDb.Get(_cacheList[_usingCache]);
+            return RedisDb.Get(_cacheList[_reloadCache]);
         }
 
         private bool _isLock = false;
         private string ReadCacheByLockExpire()
         {
-            if (DateTime.Now > _nextReloadTime&&!_isLock)
+            if (DateTime.Now > _nextReloadTime && !_isLock)
             {
                 _isLock = true;
                 lock (this)
                 {
-
                     if (DateTime.Now > _nextReloadTime)
                     {
                         ReloadCache();
@@ -102,7 +101,7 @@ namespace RedisDemon
                 }
                 _isLock = false;
             }
-            return RedisDb.Get(_cacheList[_usingCache]);
+            return RedisDb.Get(_cacheList[_reloadCache]);
         }
 
 
@@ -111,12 +110,16 @@ namespace RedisDemon
 
         public void TestDoubleBuff()
         {
-            for (int i = 0; i < 100; i++)
+            for (int i = 0; i < 1000; i++)
             {
-                Thread.Sleep(100);
-               // WriteColorLine($"[{DateTime.Now}]:::::::" + ReadCache(), ConsoleColor.Yellow);
-                WriteColorLine($"[{DateTime.Now}]:::::::" + ReadCacheByLock(), ConsoleColor.Yellow);
-                WriteColorLine($"[{DateTime.Now}]:::::::" + ReadCacheByLockExpire(), ConsoleColor.Yellow);
+                Thread.Sleep(10);
+
+                //Task.Run(() => WriteColorLine($"[{DateTime.Now}]:::::::" + ReadCache(), ConsoleColor.Yellow));
+                //Task.Run(() => WriteColorLine($"[{DateTime.Now}]:::::::" + ReadCacheByLock(), ConsoleColor.Yellow));
+                Task.Run(() => WriteColorLine($"[{DateTime.Now}]:::::::" + ReadCacheByLockExpire(), ConsoleColor.Yellow));
+
+
+
 
             }
         }

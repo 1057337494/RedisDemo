@@ -17,10 +17,17 @@ namespace RedisDemon
             //new CacheBrokeBLL().BrokeTest2();
             //new CacheBrokeBLL().BrokeTest3();
 
-            // new RedisTypeBLL().ShowType();
+             new RedisTypeBLL().ShowType();
 
-            new DoubleBuffBLL().TestDoubleBuff();
+            //new DoubleBuffBLL().TestDoubleBuff();
+
+            // new CacheLowerBLL().TestLower();
+
             //new CachePreheatBLL().GetPreheatCache();
+
+           // new RedisTypeBLL().ShowType();
+
+            //new RedisLockBLL().TestLock();
 
             Console.WriteLine("Hello World!");
         }

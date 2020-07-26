@@ -14,14 +14,18 @@ namespace RedisDemon
     {
         private static Dictionary<int, string> _localCache = new Dictionary<int, string>() { [1] = "获取缓存失败，启用本地数据" };
 
-        private static object _lock = new object();
         string cacheKey => $"LowerCacheKey1";
+        string cacheKey2 => "LowerCacheKeyBackup";
         public CacheLowerBLL()
         {
-            RedisDb.Set("LowerCacheKey1", "缓存获取的数据");
-
+            RedisDb.Set(cacheKey, "缓存获取的数据");
+            RedisDb.Set(cacheKey2, "低级备份缓存");
         }
 
+        /// <summary>
+        /// 启用本地缓存
+        /// </summary>
+        /// <returns></returns>
         private string GetCache()
         {
             try
@@ -38,13 +42,64 @@ namespace RedisDemon
             }
         }
 
+        /// <summary>
+        /// 启用二级缓存
+        /// </summary>
+        /// <returns></returns>
+        private string GetCache2()
+        {
+            string cacheKey2 = "LowerCacheKeyBackup";
+            try
+            {
+                if (new Random().Next(0, 10) > 6)
+                {
+                    throw new Exception();
+                }
+                return RedisDb.Get(cacheKey);
+            }
+            catch (Exception ex)
+            {
+                return RedisDb.Get(cacheKey2);
+            }
+        }
+
+
+        private int _exceptionCount = 0;
+        /// <summary>
+        /// 禁止访问业务
+        /// </summary>
+        /// <returns></returns>
+        private string GetCache3()
+        {
+            if(_exceptionCount>10)
+            {
+                return "业务繁忙，请稍后访问";
+            }
+
+            try
+            {
+                if (new Random().Next(0, 10) > 6)
+                {
+                    throw new Exception();
+                }
+                return RedisDb.Get(cacheKey);
+            }
+            catch (Exception ex)
+            {
+                _exceptionCount++;
+                return "业务繁忙，请稍后访问";
+            }
+        }
+
 
         public void TestLower()
         {
             for (int i = 0; i < 100; i++)
             {
                 Thread.Sleep(10);
-                WriteColorLine(GetCache(), ConsoleColor.Green);
+                //WriteColorLine(GetCache(), ConsoleColor.Green);
+                WriteColorLine(GetCache2(), ConsoleColor.Green);
+                //WriteColorLine(GetCache3(), ConsoleColor.Green);
             }
         }
 

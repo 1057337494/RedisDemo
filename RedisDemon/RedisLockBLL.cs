@@ -31,10 +31,13 @@ namespace RedisDemon
 
             if (RedisDb.SetNx(cacheKey, "1"))
             {
+                //关注点1：设置过期时间失败
                 RedisDb.Expire(cacheKey, 5);
                 WriteColorLine($"正在处理ID【{id}】", ConsoleColor.Green);
                 Thread.Sleep(1 * 1000);
                 WriteColorLine($"处理ID结束【{id}】", ConsoleColor.Red);
+
+                //关注点2：超时删除
                 RedisDb.Del(cacheKey);
             }
             else

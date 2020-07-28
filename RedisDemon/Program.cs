@@ -18,10 +18,11 @@ namespace RedisDemon
             //new CacheBrokeBLL().BrokeTest3();
 
             // new RedisTypeBLL().ShowType();
+            //new RedisTypeBLL().ShowType();
 
             //new DoubleBuffBLL().TestDoubleBuff();
 
-            // new CacheLowerBLL().TestLower();
+             new CacheLowerBLL().TestLower();
 
             //new CachePreheatBLL().GetPreheatCache();
 
@@ -30,6 +31,9 @@ namespace RedisDemon
             //new RedisLockBLL().TestLock();
 
             new CacheLevelBLL().TestCacheLevel();
+
+
+            //new RedisPuReBLl();
 
             Console.WriteLine("Hello World!");
         }

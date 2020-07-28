@@ -9,12 +9,14 @@ using static RedisBase.Register;
 namespace RedisDemon
 {
     /// <summary>
-    /// 缓存穿透
+    /// 缓存血崩
     /// </summary>
     public class CacheBrokeBLL
     {
         public CacheBrokeBLL()
         {
+            //预热缓存
+
             //var allData = GetDbAll();
             //foreach (var item in allData)
             //{
@@ -22,15 +24,16 @@ namespace RedisDemon
             //    SetCache2(item);
             //    SetCache3(item);
             //}
-
-
-           
             //Thread.Sleep(1 * 1000);
         }
 
         #region 同时失效
-        private static object _lock = new object();
-        private void SetCache(Person model)
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="model"></param>
+        private void SetCache(Person model, bool isRandom)
         {
             lock (model)
             {
@@ -39,19 +42,27 @@ namespace RedisDemon
                     Thread.Sleep(1 * 1000);
                     var cacheKey = $"Broke:{model.Id}";
 
-                    // RedisDb.Set(cacheKey, model, 1);
-                    RedisDb.Set(cacheKey, model, 1 + new Random().Next(0, 20) / 10);
-
-
+                    if (isRandom)
+                    {
+                        RedisDb.Set(cacheKey, model, 2 + new Random().Next(0, 20) / 10);
+                    }
+                    else
+                    {
+                        RedisDb.Set(cacheKey, model, 2);
+                    }
                 });
             }
         }
 
 
 
-
-
-        public Person GetCache(int id, ref int cacheInt)
+        /// <summary>
+        /// 获取缓存
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="cacheInt"></param>
+        /// <returns></returns>
+        private Person GetCache(int id,bool isRandom, ref int cacheInt)
         {
             var cacheKey = $"Broke:{id}";
 
@@ -59,29 +70,36 @@ namespace RedisDemon
             if (val == null)
             {
                 var model = GetDbData(id);
-                SetCache(model);
-
+                SetCache(model, isRandom);
                 return model;
             }
-
             WriteColorLine("缓存获取数据成功", ConsoleColor.Green);
             cacheInt++;
             return Newtonsoft.Json.JsonConvert.DeserializeAnonymousType(val, new Person());
         }
 
-
-        public void BrokeTest()
+        /// <summary>
+        /// 测试 随机时间缓存雪崩
+        /// </summary>
+        /// <param name="isRandom"></param>
+        public void TestBroke(bool isRandom)
         {
+            var alldata = GetDbAll();
+            foreach (var item in alldata)
+            {
+                SetCache(item,isRandom);
+            }
+            Thread.Sleep(1 * 1000);
+
             int cacheInt = 0;
             var allCount = GetDbAll().Count;
             for (int i = 0; i < 1000; i++)
             {
-                Thread.Sleep(10);
+                Thread.Sleep(100);
                 var id = i % allCount + 1;
                 WriteColorLine($"查询ID:[{id}]", ConsoleColor.Gray);
-                GetCache(id, ref cacheInt);
+                GetCache(id, isRandom, ref cacheInt);
             }
-            WriteColorLine($"缓存命中{cacheInt}次", ConsoleColor.Blue);
         }
 
         #endregion
@@ -151,7 +169,7 @@ namespace RedisDemon
                     //全表重建缓存  
                     var cacheKey = $"BrokeBigKey:{SimpleHash(model.Id)}";
                     RedisDb.HSet(cacheKey, model.Id.ToString(), model);
-                    RedisDb.Expire(cacheKey, 1+new Random().Next(0,20)/10);
+                    RedisDb.Expire(cacheKey, 1 + new Random().Next(0, 20) / 10);
                 });
             }
         }

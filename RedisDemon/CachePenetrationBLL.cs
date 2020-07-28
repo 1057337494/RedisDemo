@@ -13,21 +13,15 @@ namespace RedisDemon
     /// </summary>
     public class CachePenetrationBLL
     {
-
-
-
-
-
-       
-
+        /// <summary>
+        /// 全表重建缓存导致无法缓存不存在的Key
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         private Person GetCache2(int id)
         {
             var cacheKey = "PenetrationCache2";
-
             var getCache = RedisDb.HGet(cacheKey, id.ToString());
-
-
-
             if (getCache == null)
             {
                 //全表重建缓存
@@ -37,27 +31,24 @@ namespace RedisDemon
                     pinple.HSet(cacheKey, item.Id.ToString(), item);
                 }
                 pinple.EndPipe();
-
-
                 getCache = RedisDb.HGet(cacheKey, id.ToString());
             }
-
             RedisDb.Expire(cacheKey, 10);
-
-
             if (getCache == null)
             {
                 return GetDbData(id);
             }
-
             return Newtonsoft.Json.JsonConvert.DeserializeAnonymousType(getCache, new Person());
         }
 
-
+        /// <summary>
+        /// 单个缓存
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         private Person GetCache(int id)
         {
             var cacheKey = "PenetrationCache2";
-
             var getCache = RedisDb.HGet(cacheKey, id.ToString());
             if (getCache == null)
             {
@@ -65,7 +56,6 @@ namespace RedisDemon
                 RedisDb.HSet(cacheKey, id.ToString(), dt);
                 return dt;
             }
-
             RedisDb.Expire(cacheKey, 10);
             return Newtonsoft.Json.JsonConvert.DeserializeAnonymousType(getCache, new Person());
         }
@@ -78,29 +68,13 @@ namespace RedisDemon
                 Thread.Sleep(1);
                 var id = new Random().Next(1, 15);
                 WriteColorLine($"查询ID:[{id}]", ConsoleColor.Gray);
-                GetCache2(id);
+                //GetCache2(id);
+                GetCache(id);
             }
-
-
-
         }
 
 
-        //public string GetCache2()
-        //{
-        //    var val = Register.RedisDb.Get("Cache1");
-        //    if (val == null)
-        //    {
-        //        var dt = GetDbData();
-        //        if (dt == null)
-        //        {
-        //            dt = "防止击穿";
-        //        }
-        //        SetCache(dt);
-        //        return dt;
-        //    }
-        //    return val;
-        //}
+      
 
 
     }

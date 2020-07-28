@@ -31,7 +31,6 @@ namespace RedisDemon
             {
                 ReloadCache();
             }
-
             return RedisDb.Get(_cacheKey);
         }
 
@@ -39,16 +38,10 @@ namespace RedisDemon
         {
             var inTime = DateTime.Now;
             WriteColorLine($"[{inTime}]进入获取缓存", ConsoleColor.Red);
-
-
             WriteColorLine(GetCache(), ConsoleColor.Yellow);
-
             var outTime = DateTime.Now;
             WriteColorLine($"[{outTime}]结束获取缓存", ConsoleColor.Red);
-
-
-            WriteColorLine($"用时:{(outTime-inTime).Seconds}秒", ConsoleColor.Red);
-
+            WriteColorLine($"用时:{(outTime - inTime).Seconds}秒", ConsoleColor.Red);
         }
 
 
